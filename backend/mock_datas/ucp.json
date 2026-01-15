@@ -7,6 +7,10 @@
         "spec": "https://ucp.dev/specs/shopping",
         "a2a": {
           "endpoint": "http://localhost:10999/.well-known/agent-card.json"
+        },
+        "mcp": {
+          "schema": "https://ucp.dev/services/shopping/mcp.openrpc.json",
+          "endpoint": "http://localhost:10999/.well-known/mcp.json"
         }
       }
     },
