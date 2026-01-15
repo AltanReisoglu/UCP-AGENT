@@ -21,8 +21,11 @@ from ucp_sdk.models.schemas.shopping.discount_resp import Checkout as DiscountCh
 from ucp_sdk.models.schemas.shopping.fulfillment_resp import Checkout as FulfillmentCheckout
 from ucp_sdk.models.schemas.shopping.payment_resp import PaymentResponse
 from ucp_sdk.models.schemas.ucp import ResponseCheckout as UcpMetadata
-from ..constants import UCP_BUYER_CONSENT_EXTENSION, UCP_DISCOUNT_EXTENSION, UCP_FULFILLMENT_EXTENSION
+from ..constants import Constants
 
+UCP_BUYER_CONSENT_EXTENSION = Constants.UCP_BUYER_CONSENT_EXTENSION
+UCP_DISCOUNT_EXTENSION = Constants.UCP_DISCOUNT_EXTENSION
+UCP_FULFILLMENT_EXTENSION = Constants.UCP_FULFILLMENT_EXTENSION
 
 def get_checkout_type(ucp_metadata: UcpMetadata) -> type[Checkout]:
   """Generates a dynamic Checkout type based on the active capabilities in the UCP metadata."""

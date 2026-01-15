@@ -3,7 +3,7 @@ from dataclasses import dataclass
 @dataclass
 class Constants:
 
-ADK_USER_CHECKOUT_ID = "user:checkout_id"
+    ADK_USER_CHECKOUT_ID = "user:checkout_id"
     ADK_PAYMENT_STATE = "__payment_data__"
     ADK_UCP_METADATA_STATE = "__ucp_metadata__"
     ADK_EXTENSIONS_STATE_KEY = "__session_extensions__"

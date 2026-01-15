@@ -36,7 +36,7 @@ from ucp_sdk.models.schemas.shopping.types.shipping_destination_resp import Ship
 from ucp_sdk.models.schemas.shopping.types.total_resp import TotalResponse as Total
 from ucp_sdk.models.schemas.ucp import ResponseCheckout as UcpMetadata
 from .helpers import get_checkout_type
-from .models.product_types import ImageObject, Product, ProductResults
+from .models.product_base import ImageObject, Product, ProductResults
 
 
 default_currency = "USD"
@@ -58,14 +58,14 @@ class RetailStore:
   # load the ucp metadata from data/ucp.json
   def _initialize_ucp_metadata(self):
     with open(
-        os.path.join(os.path.dirname(__file__), "data/ucp.json"), "r"
+        os.path.join(os.path.dirname(__file__), "mock_datas/ucp.json"), "r"
     ) as f:
       self._ucp_metadata = json.load(f)
 
   def _initialize_products(self):
     """Loads products from a JSON file and stores them for lookup by ProductID."""
     with open(
-        os.path.join(os.path.dirname(__file__), "data/products.json"), "r"
+        os.path.join(os.path.dirname(__file__), "mock_datas/products.json"), "r"
     ) as f:
       products_data = json.load(f)
       for product_data in products_data:

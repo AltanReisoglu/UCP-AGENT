@@ -25,24 +25,15 @@ from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 from ucp_sdk.models.schemas.shopping.types.buyer import Buyer
 from ucp_sdk.models.schemas.shopping.types.postal_address import PostalAddress
-from .a2a_extensions import UcpExtension
-from .constants import (
-    ADK_EXTENSIONS_STATE_KEY,
-    ADK_LATEST_TOOL_RESULT,
-    ADK_PAYMENT_STATE,
-    ADK_UCP_METADATA_STATE,
-    ADK_USER_CHECKOUT_ID,
-    UCP_CHECKOUT_KEY,
-    UCP_PAYMENT_DATA_KEY,
-    UCP_RISK_SIGNALS_KEY,
-)
-from .payment_processor import MockPaymentProcessor
-from .store import RetailStore
+from ..extensions.ucp_extension import UcpExtension
+from ..constants import Constants
+from ..payment_processor import MockPaymentProcessor
+from ..store import RetailStore
 
 
 store = RetailStore()
 mpp = MockPaymentProcessor()
-
+constants = Constants()
 
 def _create_error_response(message: str) -> dict:
   return {"message": message, "status": "error"}
@@ -81,13 +72,13 @@ def add_to_checkout(
       dict: Returns the response from the tool with success or error status.
   """
   checkout_id = (
-      tool_context.state[ADK_USER_CHECKOUT_ID]
-      if ADK_USER_CHECKOUT_ID in tool_context.state
+      tool_context.state[constants.ADK_USER_CHECKOUT_ID]
+      if constants.ADK_USER_CHECKOUT_ID in tool_context.state
       else None
   )
   ucp_metadata = (
-      tool_context.state[ADK_UCP_METADATA_STATE]
-      if ADK_UCP_METADATA_STATE in tool_context.state
+      tool_context.state[constants.ADK_UCP_METADATA_STATE]
+      if constants.ADK_UCP_METADATA_STATE in tool_context.state
       else None
   )
 
@@ -99,10 +90,10 @@ def add_to_checkout(
         ucp_metadata, product_id, quantity, checkout_id
     )
     if not checkout_id:
-      tool_context.state[ADK_USER_CHECKOUT_ID] = checkout.id
+      tool_context.state[constants.ADK_USER_CHECKOUT_ID] = checkout.id
 
     return {
-        UCP_CHECKOUT_KEY: checkout.model_dump(mode="json"),
+        constants.UCP_CHECKOUT_KEY: checkout.model_dump(mode="json"),
         "status": "success",
     }
   except ValueError:
@@ -131,7 +122,7 @@ def remove_from_checkout(tool_context: ToolContext, product_id: str) -> dict:
 
   try:
     return {
-        UCP_CHECKOUT_KEY: (
+        constants.UCP_CHECKOUT_KEY: (
             store.remove_from_checkout(checkout_id, product_id).model_dump(
                 mode="json"
             )
@@ -166,7 +157,7 @@ def update_checkout(
 
   try:
     return {
-        UCP_CHECKOUT_KEY: (
+        constants.UCP_CHECKOUT_KEY: (
             store.update_checkout(checkout_id, product_id, quantity).model_dump(
                 mode="json"
             )
@@ -200,7 +191,7 @@ def get_checkout(tool_context: ToolContext) -> dict:
     return _create_error_response("Checkout not found with the given ID.")
 
   return {
-      UCP_CHECKOUT_KEY: checkout.model_dump(mode="json"),
+      constants.UCP_CHECKOUT_KEY: checkout.model_dump(mode="json"),
       "status": "success",
   }
 
@@ -282,7 +273,7 @@ async def complete_checkout(tool_context: ToolContext) -> dict:
   if checkout is None:
     return _create_error_response("Checkout not found for the current session.")
 
-  payment_data: dict[str, Any] = tool_context.state.get(ADK_PAYMENT_STATE)
+  payment_data: dict[str, Any] = tool_context.state.get(constants.ADK_PAYMENT_STATE)
 
   if payment_data is None:
     return {
@@ -295,7 +286,7 @@ async def complete_checkout(tool_context: ToolContext) -> dict:
 
   try:
     task = mpp.process_payment(
-        payment_data[UCP_PAYMENT_DATA_KEY], payment_data[UCP_RISK_SIGNALS_KEY]
+        payment_data[constants.UCP_PAYMENT_DATA_KEY], payment_data[constants.UCP_RISK_SIGNALS_KEY]
     )
 
     if task is None:
@@ -304,15 +295,15 @@ async def complete_checkout(tool_context: ToolContext) -> dict:
       )
 
     if task.status is not None and task.status.state == TaskState.completed:
-      payment_instrument = payment_data.get(UCP_PAYMENT_DATA_KEY)
+      payment_instrument = payment_data.get(constants.UCP_PAYMENT_DATA_KEY)
       checkout.payment.selected_instrument_id = payment_instrument.root.id
       checkout.payment.instruments = [payment_instrument]
 
       response = store.place_order(checkout_id)
       # clear completed checkout from state
-      tool_context.state[ADK_USER_CHECKOUT_ID] = None
+      tool_context.state[constants.ADK_USER_CHECKOUT_ID] = None
       return {
-          UCP_CHECKOUT_KEY: response.model_dump(mode="json"),
+          constants.UCP_CHECKOUT_KEY: response.model_dump(mode="json"),
           "status": "success",
       }
     else:
@@ -343,15 +334,15 @@ def start_payment(tool_context: ToolContext) -> dict:
   else:
     tool_context.actions.skip_summarization = True
     return {
-        UCP_CHECKOUT_KEY: result.model_dump(mode="json"),
+        constants.UCP_CHECKOUT_KEY: result.model_dump(mode="json"),
         "status": "success",
     }
 
 
 def _get_current_checkout_id(tool_context: ToolContext) -> str | None:
   return (
-      tool_context.state[ADK_USER_CHECKOUT_ID]
-      if ADK_USER_CHECKOUT_ID in tool_context.state
+      tool_context.state[constants.ADK_USER_CHECKOUT_ID]
+      if constants.ADK_USER_CHECKOUT_ID in tool_context.state
       else None
   )
 
@@ -362,13 +353,13 @@ def after_tool_modifier(
     tool_context: ToolContext,
     tool_response: Dict,
 ) -> Optional[Dict]:
-  extensions = tool_context.state.get(ADK_EXTENSIONS_STATE_KEY, [])
+  extensions = tool_context.state.get(constants.ADK_EXTENSIONS_STATE_KEY, [])
   # add typed data responses to the state
-  ucp_response_keys = [UCP_CHECKOUT_KEY, "a2a.product_results"]
+  ucp_response_keys = [constants.UCP_CHECKOUT_KEY, "a2a.product_results"]
   if UcpExtension.URI in extensions and any(
       key in tool_response for key in ucp_response_keys
   ):
-    tool_context.state[ADK_LATEST_TOOL_RESULT] = tool_response
+    tool_context.state[constants.ADK_LATEST_TOOL_RESULT] = tool_response
 
   return None
 
@@ -377,13 +368,13 @@ def modify_output_after_agent(
     callback_context: CallbackContext,
 ) -> Optional[types.Content]:
   # add the UCP tool responses as agent output
-  if callback_context.state.get(ADK_LATEST_TOOL_RESULT):
+  if callback_context.state.get(constants.ADK_LATEST_TOOL_RESULT):
     return types.Content(
         parts=[
             types.Part(
                 function_response=types.FunctionResponse(
                     response={
-                        "result": callback_context.state[ADK_LATEST_TOOL_RESULT]
+                        "result": callback_context.state[constants.ADK_LATEST_TOOL_RESULT]
                     }
                 )
             )

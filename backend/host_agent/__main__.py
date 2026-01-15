@@ -26,6 +26,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCard
 import click
 from dotenv import load_dotenv
+import httpx
 from starlette.applications import Starlette
 from starlette.responses import FileResponse
 from starlette.routing import Mount, Route
@@ -59,7 +60,7 @@ async def run(host, port):
     logger.error("GOOGLE_API_KEY must be set")
     exit(1)
 
-  card_path = os.path.join(os.path.dirname(__file__), "data/agent_card.json")
+  card_path = os.path.join(os.path.dirname(__file__), "..", "mock_datas", "agent_card.json")
   with open(card_path, "r", encoding="utf-8") as f:
     data = json.load(f)
   agent_card = AgentCard.model_validate(data)
@@ -70,9 +71,11 @@ async def run(host, port):
       agent_executor=ADKAgentExecutor(
           agent=business_agent,
           extensions=agent_card.capabilities.extensions or [],
-          push_notifier=InMemoryPushNotifier(httpx_client)
+          
       ),
       task_store=task_store,
+      push_notifier=InMemoryPushNotifier(httpx_client)
+  
   )
 
   a2a_app = A2AStarletteApplication(
@@ -83,13 +86,13 @@ async def run(host, port):
       Route(
           "/.well-known/ucp",
           lambda _: FileResponse(
-              os.path.join(os.path.dirname(__file__), "data/ucp.json")
+              os.path.join(os.path.dirname(__file__), "..", "mock_datas", "ucp.json")
           ),
       ),
       Mount(
           "/images",
           app=StaticFiles(
-              directory=os.path.join(os.path.dirname(__file__), "data/images")
+              directory=os.path.join(os.path.dirname(__file__), "..", "mock_datas", "images")
           ),
           name="images",
       ),
