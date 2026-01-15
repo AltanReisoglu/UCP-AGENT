@@ -1,0 +1,44 @@
+{
+  "ucp": {
+    "version": "2026-01-11",
+    "services": {
+      "dev.ucp.shopping": {
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specs/shopping",
+        "a2a": {
+          "endpoint": "http://localhost:10999/.well-known/agent-card.json"
+        }
+      }
+    },
+    "capabilities": [
+      {
+        "name": "dev.ucp.shopping.checkout",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specs/shopping/checkout",
+        "schema": "https://ucp.dev/schemas/shopping/checkout.json"
+      },
+      {
+        "name": "dev.ucp.shopping.fulfillment",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specs/shopping/fulfillment",
+        "schema": "https://ucp.dev/schemas/shopping/fulfillment.json",
+        "extends": "dev.ucp.shopping.checkout"
+      }
+    ]
+  },
+  "payment": {
+    "handlers": [{
+      "id": "example_payment_provider",
+      "name": "example.payment.provider",
+      "version": "2026-01-11",
+      "spec": "https://pay.provider.example/specs/handlers/payments",
+      "config_schema": "https://pay.provider.example/specs/handlers/config.json",
+      "instrument_schemas": [
+        "https://ucp.dev/schemas/shopping/types/card_payment_instrument.json"
+      ],
+      "config": {
+        "business_id": "1234567890"
+      }
+    }]
+  }
+}

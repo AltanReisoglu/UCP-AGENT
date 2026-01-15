@@ -1,0 +1,57 @@
+[
+
+  {
+    "@type": "Product",
+    "productID": "CHIPS-001",
+    "name": "Classic Potato Chips",
+    "sku": "CHIPS-001",
+    "image": [
+      "http://localhost:10999/images/chips.jpg"
+    ],
+    "brand": {
+      "@type": "Brand",
+      "name": "SaltySnacks"
+    },
+    "offers": {
+      "price": "3.79",
+      "priceCurrency": "USD",
+      "priceSpecification": null,
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    },
+    "aggregateRating": null,
+    "url": "https://example.com/chips-001",
+    "description": "Crispy and salty classic potato chips, family size.",
+    "gtin": "9876543210128",
+    "mpn": "SS-PC-001",
+    "category": "Groceries > Snacks > Chips & Crisps"
+  },{
+    "@type": "Product",
+    "productID": "SW-CHIPS-001",
+    "name": "Baked Sweet Potato Chips",
+    "sku": "SW-CHIPS-001",
+    "image": [
+      "http://localhost:10999/images/chips.jpg"
+    ],
+    "brand": {
+      "@type": "Brand",
+      "name": "SaltySnacks"
+    },
+    "offers": {
+      "price": "4.79",
+      "priceCurrency": "USD",
+      "priceSpecification": null,
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    },
+    "aggregateRating": null,
+    "url": "https://example.com/sw-chips-001",
+    "description": "Crispy and salty sweet potato chips, family size.",
+    "gtin": "9876543210129",
+    "mpn": "SS-PC-009",
+    "category": "Groceries > Snacks > Chips & Crisps"
+  }
+  
+]
