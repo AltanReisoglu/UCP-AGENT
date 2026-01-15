@@ -35,7 +35,7 @@ class ProfileResolver:
   def _load_merchant_profile(self) -> UcpMetadata:
     """Loads the merchant profile from a JSON file."""
     with open(
-        os.path.join(os.path.dirname(__file__), "data/ucp.json"), "r"
+        os.path.join(os.path.dirname(__file__), "mock_datas/ucp.json"), "r"
     ) as f:
       self.merchant_profile = json.load(f)
     return self.merchant_profile
