@@ -15,6 +15,8 @@
 """
 UCP Agent CLI - Command line interface to interact with the shopping agent.
 
+This CLI uses the ADKAgentExecutor for proper UCP protocol handling.
+
 Usage:
     python -m app --help
     python -m app chat
@@ -36,7 +38,8 @@ sys.path.insert(0, 'sdk/python/src')
 # Fix Windows console encoding
 if sys.platform == 'win32':
     os.system('chcp 65001 > nul 2>&1')
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 
 def print_header(title: str):
@@ -59,14 +62,111 @@ def print_info(msg: str):
     print(f"[INFO] {msg}")
 
 
-async def run_agent_chat(session_id: str):
-    """Run interactive chat with the agent."""
+async def run_agent_chat_with_executor(session_id: str):
+    """Run interactive chat using ADKAgentExecutor for proper UCP handling."""
+    from backend.host_agent.agent import build_agent
+    from backend.host_agent.agent_executor import ADKAgentExecutor
+    from backend.extensions.ucp_extension import UcpExtension
+    from a2a.types import AgentExtension
+    from a2a.server.events import EventQueue
+    from a2a.server.agent_execution import RequestContext
+    from google.adk.runners import Runner
+    from google.adk.sessions import InMemorySessionService
+    from google.genai import types
+    
+    print_header("UCP Shopping Agent (with Executor)")
+    print(f"Session ID: {session_id}")
+    print("Type 'quit' or ':q' to exit\n")
+    
+    try:
+        # Build agent with MCP tools
+        print_info("Loading agent and MCP tools...")
+        agent = await build_agent()
+        print_success(f"Agent loaded with {len(agent.tools)} tool(s)")
+        
+        # Create executor with UCP extension
+        ucp_extension = AgentExtension(
+            uri=UcpExtension.URI,
+            description="UCP Shopping Extension"
+        )
+        executor = ADKAgentExecutor(agent, extensions=[ucp_extension])
+        print_success("ADKAgentExecutor initialized")
+        
+        # Create session using executor's session service
+        user_id = "cli_user"
+        session = await executor.runner.session_service.create_session(
+            app_name=agent.name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+        print_success(f"Session created: {session.id}")
+        
+        print_success("Ready for chat!\n")
+        
+        while True:
+            try:
+                # Get user input
+                user_input = input("You: ")
+                
+                if user_input.strip().lower() in ["quit", ":q", "exit"]:
+                    print("Goodbye!")
+                    break
+                
+                if not user_input.strip():
+                    continue
+                
+                # Create user message and run via Runner directly
+                # (ADKAgentExecutor requires A2A server context)
+                user_message = types.Content(
+                    parts=[types.Part(text=user_input)],
+                    role="user"
+                )
+                
+                print_info("Thinking...")
+                
+                # Run agent
+                response_parts = []
+                async for event in executor.runner.run_async(
+                    session_id=session_id,
+                    user_id="cli_user",
+                    new_message=user_message,
+                ):
+                    if hasattr(event, 'content') and event.content:
+                        if hasattr(event.content, 'parts'):
+                            for part in event.content.parts:
+                                if hasattr(part, 'text') and part.text:
+                                    response_parts.append(part.text)
+                                elif hasattr(part, 'function_response'):
+                                    if part.function_response and part.function_response.response:
+                                        result = part.function_response.response.get('result')
+                                        if result:
+                                            response_parts.append(f"\n[Tool Result]: {result}")
+                
+                # Display response
+                if response_parts:
+                    response = "\n".join(response_parts)
+                    print(f"\nAgent: {response}\n")
+                else:
+                    print("[INFO] Agent didn't respond with text.\n")
+                    
+            except KeyboardInterrupt:
+                print("\n[INFO] Interrupted. Type 'quit' to exit.")
+                continue
+                
+    except Exception as e:
+        print_error(str(e))
+        import traceback
+        traceback.print_exc()
+
+
+async def run_agent_chat_simple(session_id: str):
+    """Run interactive chat with the agent (simple mode without executor)."""
     from backend.host_agent.agent import build_agent
     from google.adk.runners import Runner
     from google.adk.sessions import InMemorySessionService
     from google.genai import types
     
-    print_header("UCP Shopping Agent")
+    print_header("UCP Shopping Agent (Simple Mode)")
     print(f"Session ID: {session_id}")
     print("Type 'quit' or ':q' to exit\n")
     
@@ -145,6 +245,9 @@ async def run_agent_chat(session_id: str):
 async def run_test():
     """Run a quick test of the agent system."""
     from backend.host_agent.agent import build_agent
+    from backend.host_agent.agent_executor import ADKAgentExecutor
+    from backend.extensions.ucp_extension import UcpExtension
+    from a2a.types import AgentExtension
     
     print_header("System Test")
     
@@ -164,11 +267,21 @@ async def run_test():
             tool_name = getattr(tool, 'name', str(tool))
             print(f"   {i}. {tool_name}")
         
+        # Test 4: Create executor
+        print_info("4. Creating ADKAgentExecutor...")
+        ucp_extension = AgentExtension(
+            uri=UcpExtension.URI,
+            description="UCP Shopping Extension"
+        )
+        executor = ADKAgentExecutor(agent, extensions=[ucp_extension])
+        print_success("Executor created successfully")
+        
         print("\n[SUCCESS] All tests passed!")
         
     except Exception as e:
         print_error(f"Test failed: {e}")
-        raise
+        import traceback
+        traceback.print_exc()
 
 
 async def run_mcp_test():
@@ -233,12 +346,13 @@ async def run_mcp_test():
                 
         print("\n[SUCCESS] MCP Server is healthy!")
         
-    except httpx.ConnectError:
-        print_error("Cannot connect to MCP Server at localhost:10999")
-        print("[TIP] Make sure the server is running:")
-        print("      python -m app server")
     except Exception as e:
-        print_error(f"Error: {e}")
+        if "ConnectError" in str(type(e)):
+            print_error("Cannot connect to MCP Server at localhost:10999")
+            print("[TIP] Make sure the server is running:")
+            print("      python -m app server")
+        else:
+            print_error(f"Error: {e}")
 
 
 @click.group()
@@ -249,10 +363,14 @@ def cli():
 
 @cli.command()
 @click.option("--session", "-s", default=None, help="Session ID (auto-generated if not provided)")
-def chat(session: Optional[str]):
+@click.option("--simple", is_flag=True, help="Use simple mode without executor")
+def chat(session: Optional[str], simple: bool):
     """Start interactive chat with the shopping agent."""
     session_id = session or uuid4().hex
-    asyncio.run(run_agent_chat(session_id))
+    if simple:
+        asyncio.run(run_agent_chat_simple(session_id))
+    else:
+        asyncio.run(run_agent_chat_with_executor(session_id))
 
 
 @cli.command()

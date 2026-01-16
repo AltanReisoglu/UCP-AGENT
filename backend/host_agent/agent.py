@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""UCP Agent with MCP Tools Integration."""
+"""UCP Agent with MCP Tools Integration - Supports Ollama and Google Gemini."""
 
 import logging
+import os
 from typing import Any, Dict, Optional
 from a2a.types import TaskState
 from a2a.utils import get_message_text
@@ -36,6 +37,12 @@ store = RetailStore()
 mpp = MockPaymentProcessor()
 constants = Constants()
 connector = MCPConnector()
+
+# Model configuration - supports Ollama via LiteLLM
+# Set USE_OLLAMA=true in .env to use Ollama
+USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "true"
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")  # or qwen2.5, mistral, etc.
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 
 def _create_error_response(message: str) -> dict:
@@ -80,6 +87,38 @@ def modify_output_after_agent(
     return None
 
 
+def get_model():
+    """
+    Get the appropriate model based on configuration.
+    
+    If USE_OLLAMA is true, uses LiteLLM to connect to Ollama.
+    Otherwise, uses Google Gemini.
+    """
+    if USE_OLLAMA:
+        try:
+            from google.adk.models.lite_llm import LiteLlm
+            
+            # LiteLLM format for Ollama: "ollama/model_name"
+            model_name = f"ollama/{OLLAMA_MODEL}"
+            
+            print(f"[INFO] Using Ollama model: {OLLAMA_MODEL}")
+            print(f"[INFO] Ollama base URL: {OLLAMA_BASE_URL}")
+            
+            return LiteLlm(
+                model=model_name,
+                api_base=OLLAMA_BASE_URL,
+            )
+        except ImportError:
+            print("[WARNING] LiteLlm not available, falling back to Gemini")
+            return "gemini-2.0-flash"
+        except Exception as e:
+            print(f"[WARNING] Ollama setup failed: {e}, falling back to Gemini")
+            return "gemini-2.0-flash"
+    else:
+        print("[INFO] Using Google Gemini model")
+        return "gemini-2.0-flash"
+
+
 async def build_agent():
     """
     Builds the shopper agent with MCP tools loaded dynamically.
@@ -89,23 +128,27 @@ async def build_agent():
     """
     mcp_tools = await connector.get_tools()
     
+    model = get_model()
+    
     root_agent = Agent(
         name="shopper_agent",
-        model="gemini-2.5-flash",
+        model=model,
         description="Agent to help with shopping",
         instruction=(
-            "You are a helpful agent who can help user with shopping actions such"
-            " as searching the catalog, add to checkout session, complete checkout"
-            " and handle order placed event. Given the user ask, plan ahead and"
-            " invoke the tools available to complete the user's ask. Always make"
-            " sure you have completed all aspects of the user's ask. If the user"
-            " says add to my list or remove from the list, add or remove from the"
-            " cart, add the product or remove the product from the checkout"
-            " session. If the user asks to add any items to the checkout session,"
-            " search for the products and then add the matching products to"
-            " checkout session. If the user asks to replace products,"
-            " use remove_from_checkout and add_to_checkout tools to replace the"
-            " products to match the user request"
+            "You are a helpful shopping agent. You have access to these tools:\n"
+            "- search_products: Search for products in the catalog\n"
+            "- get_product: Get details of a specific product\n"
+            "- create_checkout: Create a new checkout with items\n"
+            "- get_checkout: Get current checkout status\n"
+            "- update_checkout: Update checkout (add/remove items, change quantities)\n"
+            "- complete_checkout: Complete the checkout and place order\n"
+            "- cancel_checkout: Cancel the current checkout\n\n"
+            "When user asks to search or find products, use search_products.\n"
+            "When user wants to buy something, first search for it, then create_checkout.\n"
+            "When user wants to add more items, use update_checkout.\n"
+            "When user wants to see their cart, use get_checkout.\n"
+            "When user wants to complete purchase, use complete_checkout.\n"
+            "Always respond in the user's language."
         ),
         tools=[*mcp_tools],
         after_tool_callback=after_tool_modifier,
