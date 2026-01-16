@@ -1,0 +1,10 @@
+{
+    "mcpServers": {
+        "rag_server": {
+            "command": "streamable_http",
+            "args": [
+                "http://localhost:10999/mcp/"
+            ]
+        }
+    }
+}
