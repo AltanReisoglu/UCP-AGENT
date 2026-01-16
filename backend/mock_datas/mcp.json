@@ -1,84 +1,361 @@
 {
-  "capabilities": {
-    "extensions": [
+  "ucp": {
+    "version": "2026-01-11",
+    "services": {
+      "dev.ucp.shopping": {
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/overview",
+        "mcp": {
+          "schema": "https://ucp.dev/services/shopping/mcp.openrpc.json",
+          "endpoint": "http://localhost:10999/mcp"
+        }
+      }
+    },
+    "capabilities": [
       {
-        "description": "UCP Extension",
-        "required": true,
-        "uri": "https://ucp.dev/specification/reference?v=2026-01-11",
-        "params": {
-          "capabilities": [
-            {
-              "name": "dev.ucp.shopping.checkout",
-              "version": "2026-01-11",
-              "spec": "https://ucp.dev/specs/shopping/checkout",
-              "schema": "https://ucp.dev/schemas/shopping/checkout.json"
+        "name": "dev.ucp.shopping.checkout",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/checkout",
+        "schema": "https://ucp.dev/schemas/shopping/checkout.json"
+      },
+      {
+        "name": "dev.ucp.shopping.fulfillment",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/fulfillment",
+        "schema": "https://ucp.dev/schemas/shopping/fulfillment.json",
+        "extends": "dev.ucp.shopping.checkout"
+      }
+    ]
+  },
+  "mcp": {
+    "tools": [
+      {
+        "name": "create_checkout",
+        "description": "Creates a new checkout session. Maps to UCP Create Checkout operation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "line_items": {
+              "type": "array",
+              "description": "List of line items being checked out",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "item": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ]
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "default": 1
+                  }
+                },
+                "required": [
+                  "item"
+                ]
+              }
             },
-            {
-              "name": "dev.ucp.shopping.fulfillment",
-              "version": "2026-01-11",
-              "spec": "https://ucp.dev/specs/shopping/fulfillment",
-              "schema": "https://ucp.dev/schemas/shopping/fulfillment.json",
-              "extends": "dev.ucp.shopping.checkout"
+            "currency": {
+              "type": "string",
+              "description": "ISO 4217 currency code",
+              "default": "USD"
             },
-            {
-              "name": "dev.ucp.shopping.discount",
-              "version": "2026-01-11",
-              "spec": "https://ucp.dev/specs/shopping/discount",
-              "schema": "https://ucp.dev/schemas/shopping/discount.json",
-              "extends": "dev.ucp.shopping.checkout"
+            "buyer": {
+              "type": "object",
+              "description": "Buyer information",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "first_name": {
+                  "type": "string"
+                },
+                "last_name": {
+                  "type": "string"
+                }
+              }
+            },
+            "fulfillment": {
+              "type": "object",
+              "description": "Fulfillment configuration"
+            },
+            "payment": {
+              "type": "object",
+              "description": "Payment configuration"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "description": "UUID for retry safety"
+            },
+            "_meta": {
+              "type": "object",
+              "description": "Metadata containing UCP platform profile",
+              "properties": {
+                "ucp": {
+                  "type": "object",
+                  "properties": {
+                    "profile": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
             }
+          },
+          "required": [
+            "line_items",
+            "currency"
+          ]
+        }
+      },
+      {
+        "name": "get_checkout",
+        "description": "Retrieves the current state of a checkout session.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the checkout session"
+            },
+            "_meta": {
+              "type": "object",
+              "description": "Metadata containing UCP platform profile"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      },
+      {
+        "name": "update_checkout",
+        "description": "Updates an existing checkout session. Performs full replacement.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the checkout session"
+            },
+            "line_items": {
+              "type": "array",
+              "description": "Updated list of line items"
+            },
+            "currency": {
+              "type": "string",
+              "description": "ISO 4217 currency code"
+            },
+            "buyer": {
+              "type": "object",
+              "description": "Updated buyer information"
+            },
+            "fulfillment": {
+              "type": "object",
+              "description": "Updated fulfillment configuration"
+            },
+            "payment": {
+              "type": "object",
+              "description": "Updated payment configuration"
+            },
+            "_meta": {
+              "type": "object",
+              "description": "Metadata containing UCP platform profile"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      },
+      {
+        "name": "complete_checkout",
+        "description": "Finalizes the checkout and places the order.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the checkout session"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "description": "UUID for retry safety (required)"
+            },
+            "payment": {
+              "type": "object",
+              "description": "Payment instrument instance submitted by the buyer"
+            },
+            "_meta": {
+              "type": "object",
+              "description": "Metadata containing UCP platform profile"
+            }
+          },
+          "required": [
+            "id",
+            "idempotency_key"
+          ]
+        }
+      },
+      {
+        "name": "cancel_checkout",
+        "description": "Cancels a checkout session.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier of the checkout session"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "description": "UUID for retry safety"
+            },
+            "_meta": {
+              "type": "object",
+              "description": "Metadata containing UCP platform profile"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      },
+      {
+        "name": "search_products",
+        "description": "Searches the product catalog. Helper tool for product discovery.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query string"
+            },
+            "_meta": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "get_product",
+        "description": "Retrieves product details by ID. Helper tool for product info.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "product_id": {
+              "type": "string",
+              "description": "The product identifier"
+            },
+            "_meta": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "product_id"
           ]
         }
       }
-    ],
-    "streaming": false
+    ]
   },
-  "defaultInputModes": [
-    "text",
-    "text/plain",
-    "application/json"
-  ],
-  "defaultOutputModes": [
-    "text",
-    "text/plain",
-    "application/json"
-  ],
-  "description": "SuperStore Merchant Agent",
-  "name": "SuperStore Merchant Agent",
-  "preferredTransport": "JSONRPC",
-  "protocolVersion": "0.3.0",
-  "provider": {
-    "organization": "SuperStore",
-    "url": "http://superstore.example.com"
-  },
-  "skills": [
-    {
-      "description": "Helps with product search for given user criteria",
-      "examples": [
-        "Help me find a shirt for my weekend trip"
-      ],
-      "id": "product_search",
-      "name": "Perform product search",
-      "tags": [
-        "shopping",
-        "search",
-        "catalog search"
-      ]
+  "examples": {
+    "create_checkout": {
+      "jsonrpc": "2.0",
+      "method": "create_checkout",
+      "params": {
+        "_meta": {
+          "ucp": {
+            "profile": "https://platform.example/profiles/v2026-01/shopping-agent.json"
+          }
+        },
+        "idempotency_key": "550e8400-e29b-41d4-a716-446655440000",
+        "buyer": {
+          "email": "jane.doe@example.com",
+          "first_name": "Jane",
+          "last_name": "Doe"
+        },
+        "line_items": [
+          {
+            "item": {
+              "id": "item_123"
+            },
+            "quantity": 1
+          }
+        ],
+        "currency": "USD",
+        "fulfillment": {
+          "methods": [
+            {
+              "type": "shipping",
+              "destinations": [
+                {
+                  "street_address": "123 Main St",
+                  "address_locality": "Springfield",
+                  "address_region": "IL",
+                  "postal_code": "62701",
+                  "address_country": "US"
+                }
+              ]
+            }
+          ]
+        },
+        "payment": {}
+      },
+      "id": 1
     },
-    {
-      "description": "Adds Checkout functionality for the agent",
-      "examples": [
-        "Add a product to current Checkout session",
-        "change the quantity for a product",
-        "remove a product from Checkout"
-      ],
-      "id": "checkout",
-      "name": "Checkout",
-      "tags": [
-        "checkout"
-      ]
+    "update_checkout": {
+      "jsonrpc": "2.0",
+      "method": "update_checkout",
+      "params": {
+        "_meta": {
+          "ucp": {
+            "profile": "https://platform.example/profiles/v2026-01/shopping-agent.json"
+          }
+        },
+        "id": "checkout_abc123",
+        "buyer": {
+          "email": "jane.doe@example.com",
+          "first_name": "Jane",
+          "last_name": "Doe"
+        },
+        "line_items": [
+          {
+            "item": {
+              "id": "item_123"
+            },
+            "quantity": 2
+          }
+        ],
+        "currency": "USD",
+        "fulfillment": {
+          "methods": [
+            {
+              "id": "shipping_1",
+              "line_item_ids": [
+                "item_123"
+              ],
+              "groups": [
+                {
+                  "id": "package_1",
+                  "selected_option_id": "express"
+                }
+              ]
+            }
+          ]
+        },
+        "payment": {}
+      },
+      "id": 2
     }
-  ],
-  "url": "http://localhost:10999",
-  "version": "1.0.0"
+  }
 }

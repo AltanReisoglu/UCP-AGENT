@@ -495,3 +495,32 @@ class RetailStore:
             ],
         ),
     ]
+
+  def cancel_checkout(self, checkout_id: str) -> Checkout:
+    """Cancels a checkout.
+
+    Args:
+        checkout_id (str): ID of the checkout to cancel.
+
+    Returns:
+        Checkout: The Checkout object with status set to canceled.
+
+    Raises:
+        ValueError: If checkout not found or already in terminal state.
+    """
+    checkout = self.get_checkout(checkout_id)
+    if checkout is None:
+      raise ValueError(f"Checkout with ID {checkout_id} not found")
+
+    # UCP spec: Cannot cancel completed or already canceled checkouts
+    if checkout.status in ["completed", "canceled"]:
+      raise ValueError(
+          f"Cannot cancel checkout in '{checkout.status}' state. "
+          "Only incomplete, requires_escalation, ready_for_complete, "
+          "or complete_in_progress checkouts can be canceled."
+      )
+
+    checkout.status = "canceled"
+    del self._checkouts[checkout_id]
+
+    return checkout
