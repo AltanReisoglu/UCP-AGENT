@@ -48,10 +48,10 @@ class MCPConnector:
                     timeout=10
                     )
                 
-                # ADDED: Wrap toolset creation with timeout and error handling
-                # This prevents hanging on unresponsive MCP servers
+                
+                
                 mcp_toolset = MCPToolset(connection_params=conn)
-                # Allow configurable timeout for loading tools (seconds)
+                
                 timeout_secs = float(os.getenv("MCP_TOOL_TIMEOUT", "60"))
                 toolset = await asyncio.wait_for(
                     mcp_toolset.get_tools(),
