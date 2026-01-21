@@ -11,6 +11,9 @@
         "mcp": {
           "schema": "https://ucp.dev/services/shopping/mcp.openrpc.json",
           "endpoint": "http://localhost:10999/.well-known/mcp.json"
+        },
+        "embedded": {
+            "schema": "https://ucp.dev/services/shopping/embedded.openrpc.json"
         }
       }
     },
