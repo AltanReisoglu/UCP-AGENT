@@ -355,7 +355,7 @@ class RetailStore:
     totals.append(Total(type="total", display_text="Total", amount=final_total))
     checkout.totals = totals
     checkout.continue_url = AnyUrl(
-        f"https://example.com/checkout?id={checkout.id}"
+        f"http://localhost:10999/embedded-checkout/{checkout.id}"
     )
 
   def add_delivery_address(

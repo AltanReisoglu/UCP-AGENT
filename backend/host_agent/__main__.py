@@ -89,6 +89,12 @@ async def run(host, port):
               os.path.join(os.path.dirname(__file__), "..", "mock_datas", "ucp.json")
           ),
       ),
+      Route(
+          "/embedded-checkout/{checkout_id}",
+          lambda _: FileResponse(
+              os.path.join(os.path.dirname(__file__), "..", "mock_datas", "embedded-checkout.html")
+          ),
+      ),
       Mount(
           "/images",
           app=StaticFiles(
