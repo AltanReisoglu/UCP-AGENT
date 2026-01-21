@@ -28,19 +28,49 @@ import click
 from dotenv import load_dotenv
 import httpx
 from starlette.applications import Starlette
-from starlette.responses import FileResponse
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse, JSONResponse
+from starlette.requests import Request
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 import uvicorn
 
 from .agent import root_agent as business_agent
 from .agent_executor import ADKAgentExecutor
+from ..store import RetailStore
 
 load_dotenv()
+
+# Initialize store for API access
+store = RetailStore()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
+
+
+# ============ EP API Handlers ============
+
+async def get_checkout_api(request: Request) -> JSONResponse:
+    """GET /api/checkout/{checkout_id} - Returns checkout data for embedded checkout page."""
+    checkout_id = request.path_params.get('checkout_id')
+    checkout = store.get_checkout(checkout_id)
+    if checkout is None:
+        return JSONResponse({"error": "Checkout not found"}, status_code=404)
+    return JSONResponse(checkout.model_dump(mode='json'),status_code=200)
+
+async def complete_checkout_api(request: Request) -> JSONResponse:
+    """POST /api/checkout/{checkout_id}/complete - Places order and returns confirmation."""
+    checkout_id = request.path_params.get('checkout_id')
+    
+    try:
+        checkout = store.place_order(checkout_id)
+        checkout.status = "completed"
+        checkout_data = checkout.model_dump(mode='json')
+        return JSONResponse(checkout_data)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
 
 
 def make_sync(func):
@@ -95,6 +125,17 @@ async def run(host, port):
               os.path.join(os.path.dirname(__file__), "..", "mock_datas", "embedded-checkout.html")
           ),
       ),
+      # API endpoints for embedded checkout
+      Route(
+          "/api/checkout/{checkout_id}",
+          get_checkout_api,
+          methods=["GET"],
+      ),
+      Route(
+          "/api/checkout/{checkout_id}/complete",
+          complete_checkout_api,
+          methods=["POST"],
+      ),
       Mount(
           "/images",
           app=StaticFiles(
@@ -103,7 +144,17 @@ async def run(host, port):
           name="images",
       ),
   ])
-  app = Starlette(routes=routes)
+  
+  # Add CORS middleware for browser access
+  middleware = [
+      Middleware(
+          CORSMiddleware,
+          allow_origins=["*"],
+          allow_methods=["*"],
+          allow_headers=["*"],
+      )
+  ]
+  app = Starlette(routes=routes, middleware=middleware)
 
   config = uvicorn.Config(app, host=host, port=port, log_level="info")
   server = uvicorn.Server(config)

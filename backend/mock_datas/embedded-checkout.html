@@ -1,507 +1,629 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UCP Embedded Checkout</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .checkout-container {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      max-width: 480px;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .checkout-header {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      color: white;
-      padding: 24px;
-      text-align: center;
-    }
-
-    .checkout-header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .checkout-header p {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 0.875rem;
-    }
-
-    .checkout-body {
-      padding: 24px;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-bottom: 20px;
-    }
-
-    .status-badge.ready {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .status-badge.waiting {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .status-badge .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    .status-badge.ready .dot {
-      background: #10b981;
-    }
-
-    .status-badge.waiting .dot {
-      background: #f59e0b;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .checkout-info {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .info-row:last-child {
-      border-bottom: none;
-    }
-
-    .info-label {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-
-    .info-value {
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .info-value.total {
-      color: #7c3aed;
-      font-size: 1.25rem;
-    }
-
-    .message-log {
-      background: #1e293b;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .message-log h3 {
-      color: #94a3b8;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .log-entry {
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 0.75rem;
-      padding: 4px 0;
-      border-bottom: 1px solid #334155;
-    }
-
-    .log-entry:last-child {
-      border-bottom: none;
-    }
-
-    .log-entry.sent {
-      color: #4ade80;
-    }
-
-    .log-entry.received {
-      color: #60a5fa;
-    }
-
-    .log-entry .time {
-      color: #64748b;
-      margin-right: 8px;
-    }
-
-    .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .btn {
-      padding: 14px 24px;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
-    }
-
-    .btn-primary:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .btn-secondary {
-      background: #f1f5f9;
-      color: #475569;
-    }
-
-    .btn-secondary:hover {
-      background: #e2e8f0;
-    }
-
-    .btn-danger {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-
-    .btn-danger:hover {
-      background: #fecaca;
-    }
-
-    .icon {
-      width: 20px;
-      height: 20px;
-    }
-
-    .footer {
-      text-align: center;
-      padding: 16px 24px;
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .footer p {
-      color: #94a3b8;
-      font-size: 0.75rem;
-    }
-
-    .footer a {
-      color: #7c3aed;
-      text-decoration: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="checkout-container">
-    <div class="checkout-header">
-      <h1>🛒 UCP Embedded Checkout</h1>
-      <p>Secure checkout powered by Universal Commerce Protocol</p>
-    </div>
-
-    <div class="checkout-body">
-      <div class="status-badge waiting" id="statusBadge">
-        <span class="dot"></span>
-        <span id="statusText">Waiting for Host</span>
-      </div>
-
-      <div class="checkout-info">
-        <div class="info-row">
-          <span class="info-label">Checkout ID</span>
-          <span class="info-value" id="checkoutId">-</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">EC Version</span>
-          <span class="info-value" id="ecVersion">-</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Delegations</span>
-          <span class="info-value" id="delegations">None</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Total</span>
-          <span class="info-value total" id="totalAmount">$0.00</span>
-        </div>
-      </div>
-
-      <div class="message-log" id="messageLog">
-        <h3>📡 Message Log</h3>
-        <div id="logEntries"></div>
-      </div>
-
-      <div class="actions">
-        <button class="btn btn-secondary" onclick="requestPaymentCredential()" id="payBtn">
-          💳 Request Payment Credential
-        </button>
-        <button class="btn btn-primary" onclick="completeCheckout()" id="completeBtn" disabled>
-          ✅ Complete Checkout
-        </button>
-        <button class="btn btn-danger" onclick="cancelCheckout()">
-          ❌ Cancel Checkout
-        </button>
-      </div>
-    </div>
-
-    <div class="footer">
-      <p>Embedded Checkout Protocol (ECP) • <a href="https://ucp.dev" target="_blank">UCP Specification</a></p>
-    </div>
-  </div>
-
-  <script>
-    // === ECP (Embedded Checkout Protocol) Implementation ===
-
-    const EC_VERSION = '2026-01-11';
-    let hostOrigin = '*'; // Will be set after handshake
-    let sessionStarted = false;
-    let paymentReceived = false;
-
-    // Parse URL parameters
-    function getUrlParams() {
-      const params = new URLSearchParams(window.location.search);
-      const pathParts = window.location.pathname.split('/');
-      const checkoutId = pathParts[pathParts.length - 1] || params.get('id');
-      
-      return {
-        checkoutId: checkoutId,
-        ecVersion: params.get('ec_version') || EC_VERSION,
-        ecAuth: params.get('ec_auth'),
-        ecDelegate: params.get('ec_delegate')?.split(',') || []
-      };
-    }
-
-    // Log message to UI
-    function logMessage(type, message) {
-      const logEntries = document.getElementById('logEntries');
-      const time = new Date().toLocaleTimeString();
-      const entry = document.createElement('div');
-      entry.className = `log-entry ${type}`;
-      entry.innerHTML = `<span class="time">[${time}]</span> ${type.toUpperCase()}: ${JSON.stringify(message).substring(0, 80)}...`;
-      logEntries.appendChild(entry);
-      logEntries.scrollTop = logEntries.scrollHeight;
-    }
-
-    // Send message to Host via postMessage
-    function sendToHost(message) {
-      const msg = {
-        jsonrpc: '2.0',
-        ...message
-      };
-      window.parent.postMessage(msg, hostOrigin);
-      logMessage('sent', msg);
-    }
-
-    // Handle incoming messages from Host
-    function handleHostMessage(event) {
-      // In production, validate event.origin
-      const message = event.data;
-      
-      if (!message || !message.jsonrpc) return;
-      
-      logMessage('received', message);
-
-      switch (message.method) {
-        case 'ec.start':
-          handleStart(message);
-          break;
-        case 'ec.payment.credential_response':
-          handlePaymentCredential(message);
-          break;
-        case 'ec.fulfillment.address_response':
-          handleFulfillmentAddress(message);
-          break;
-        default:
-          if (message.id && message.result) {
-            // Response to our request
-            console.log('Response received:', message);
-          }
-      }
-    }
-
-    // Handle ec.start from Host
-    function handleStart(message) {
-      sessionStarted = true;
-      updateStatus('ready', 'Session Active');
-      
-      // Send initial checkout state
-      sendToHost({
-        method: 'ec.change',
-        params: {
-          checkout: {
-            id: getUrlParams().checkoutId,
-            status: 'incomplete',
-            currency: 'USD',
-            totals: [{ type: 'total', amount: 2999, display_text: 'Total' }]
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCP Embedded Checkout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      });
-    }
 
-    // Handle payment credential from Host
-    function handlePaymentCredential(message) {
-      if (message.params?.credential || message.result?.credential) {
-        paymentReceived = true;
-        document.getElementById('completeBtn').disabled = false;
-        updateStatus('ready', 'Payment Ready');
-        
-        // Notify state change
-        sendToHost({
-          method: 'ec.change',
-          params: {
-            checkout: {
-              id: getUrlParams().checkoutId,
-              status: 'ready_for_complete'
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .checkout-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 480px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .checkout-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .checkout-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .checkout-header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        .checkout-body {
+            padding: 24px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.waiting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-badge.ready .dot {
+            background: #10b981;
+        }
+
+        .status-badge.waiting .dot {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
             }
-          }
-        });
-      }
-    }
 
-    // Handle fulfillment address from Host
-    function handleFulfillmentAddress(message) {
-      console.log('Address received:', message.params?.address);
-    }
-
-    // Request payment credential from Host
-    function requestPaymentCredential() {
-      sendToHost({
-        method: 'ec.payment.credential_request',
-        id: Date.now().toString(),
-        params: {
-          checkout_id: getUrlParams().checkoutId,
-          total: {
-            amount: 2999,
-            currency: 'USD'
-          },
-          supported_methods: ['card', 'wallet']
+            50% {
+                opacity: 0.5;
+            }
         }
-      });
-    }
 
-    // Complete checkout
-    function completeCheckout() {
-      if (!paymentReceived) {
-        alert('Please request payment credential first');
-        return;
-      }
-
-      sendToHost({
-        method: 'ec.complete',
-        params: {
-          checkout_id: getUrlParams().checkoutId,
-          order: {
-            id: 'ORD-' + Date.now(),
-            status: 'confirmed',
-            permalink_url: 'https://example.com/order/' + Date.now()
-          }
+        .checkout-info {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
         }
-      });
 
-      updateStatus('ready', 'Completed! ✓');
-    }
-
-    // Cancel checkout
-    function cancelCheckout() {
-      sendToHost({
-        method: 'ec.error',
-        params: {
-          code: 'USER_CANCELLED',
-          message: 'User cancelled the checkout'
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
         }
-      });
-    }
 
-    // Update status badge
-    function updateStatus(type, text) {
-      const badge = document.getElementById('statusBadge');
-      const statusText = document.getElementById('statusText');
-      badge.className = `status-badge ${type}`;
-      statusText.textContent = text;
-    }
+        .info-row:last-child {
+            border-bottom: none;
+        }
 
-    // Initialize on page load
-    function init() {
-      const params = getUrlParams();
-      
-      // Update UI with params
-      document.getElementById('checkoutId').textContent = params.checkoutId || 'Unknown';
-      document.getElementById('ecVersion').textContent = params.ecVersion;
-      document.getElementById('delegations').textContent = params.ecDelegate.length > 0 
-        ? params.ecDelegate.join(', ') 
-        : 'None';
-      document.getElementById('totalAmount').textContent = '$29.99';
+        .info-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
 
-      // Listen for messages from Host
-      window.addEventListener('message', handleHostMessage);
+        .info-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
 
-      // Send ec.ready to Host (handshake initiation)
-      setTimeout(() => {
-        sendToHost({
-          method: 'ec.ready',
-          params: {
-            version: EC_VERSION,
-            checkout_id: params.checkoutId,
-            capabilities: ['payment', 'fulfillment'],
-            delegations_supported: ['payment.credential', 'payment.instruments_change', 'fulfillment.address']
-          }
-        });
-      }, 500);
-    }
+        .info-value.total {
+            color: #7c3aed;
+            font-size: 1.25rem;
+        }
 
-    // Start initialization
-    init();
-  </script>
+        .message-log {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .message-log h3 {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .log-entry {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            padding: 4px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-entry.sent {
+            color: #4ade80;
+        }
+
+        .log-entry.received {
+            color: #60a5fa;
+        }
+
+        .log-entry .time {
+            color: #64748b;
+            margin-right: 8px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer p {
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+
+        .footer a {
+            color: #7c3aed;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="checkout-container">
+        <div class="checkout-header">
+            <h1>🛒 UCP Embedded Checkout</h1>
+            <p>Secure checkout powered by Universal Commerce Protocol</p>
+        </div>
+
+        <div class="checkout-body">
+            <div class="status-badge waiting" id="statusBadge">
+                <span class="dot"></span>
+                <span id="statusText">Waiting for Host</span>
+            </div>
+
+            <div class="checkout-info">
+                <div class="info-row">
+                    <span class="info-label">Checkout ID</span>
+                    <span class="info-value" id="checkoutId">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">EC Version</span>
+                    <span class="info-value" id="ecVersion">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Delegations</span>
+                    <span class="info-value" id="delegations">None</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total</span>
+                    <span class="info-value total" id="totalAmount">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Line Items Section -->
+            <div class="checkout-info" id="lineItemsSection" style="display: none;">
+                <div class="info-row" style="border-bottom: 2px solid #e2e8f0; margin-bottom: 8px;">
+                    <span class="info-label" style="font-weight: 600;">🛍️ Items</span>
+                    <span class="info-value" id="itemCount">0 items</span>
+                </div>
+                <div id="lineItemsList"></div>
+            </div>
+
+            <div class="message-log" id="messageLog">
+                <h3>📡 Message Log</h3>
+                <div id="logEntries"></div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="requestPaymentCredential()" id="payBtn">
+                    💳 Request Payment Credential
+                </button>
+                <button class="btn btn-primary" onclick="completeCheckout()" id="completeBtn" disabled>
+                    ✅ Complete Checkout
+                </button>
+                <button class="btn btn-danger" onclick="cancelCheckout()">
+                    ❌ Cancel Checkout
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Embedded Checkout Protocol (ECP) • <a href="https://ucp.dev" target="_blank">UCP Specification</a></p>
+        </div>
+    </div>
+
+    <script>
+        // === ECP (Embedded Checkout Protocol) Implementation ===
+
+        const EC_VERSION = '2026-01-11';
+        let hostOrigin = '*'; // Will be set after handshake
+        let sessionStarted = false;
+        let paymentReceived = false;
+        let checkoutTotal = 0; // Will be set from API response
+
+        // Parse URL parameters
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const pathParts = window.location.pathname.split('/');
+            const checkoutId = pathParts[pathParts.length - 1] || params.get('id');
+
+            return {
+                checkoutId: checkoutId,
+                ecVersion: params.get('ec_version') || EC_VERSION,
+                ecAuth: params.get('ec_auth'),
+                ecDelegate: params.get('ec_delegate')?.split(',') || []
+            };
+        }
+
+        // Log message to UI
+        function logMessage(type, message) {
+            const logEntries = document.getElementById('logEntries');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="time">[${time}]</span> ${type.toUpperCase()}: ${JSON.stringify(message).substring(0, 80)}...`;
+            logEntries.appendChild(entry);
+            logEntries.scrollTop = logEntries.scrollHeight;
+        }
+
+        // Send message to Host via postMessage
+        function sendToHost(message) {
+            const msg = {
+                jsonrpc: '2.0',
+                ...message
+            };
+            window.parent.postMessage(msg, hostOrigin);
+            logMessage('sent', msg);
+        }
+
+        // Handle incoming messages from Host
+        function handleHostMessage(event) {
+            // In production, validate event.origin
+            const message = event.data;
+
+            if (!message || !message.jsonrpc) return;
+
+            logMessage('received', message);
+
+            switch (message.method) {
+                case 'ec.start':
+                    handleStart(message);
+                    break;
+                case 'ec.payment.credential_response':
+                    handlePaymentCredential(message);
+                    break;
+                case 'ec.fulfillment.address_response':
+                    handleFulfillmentAddress(message);
+                    break;
+                default:
+                    if (message.id && message.result) {
+                        // Response to our request
+                        console.log('Response received:', message);
+                    }
+            }
+        }
+
+        // Handle ec.start from Host
+        function handleStart(message) {
+            sessionStarted = true;
+            updateStatus('ready', 'Session Active');
+
+            // Send initial checkout state
+            sendToHost({
+                method: 'ec.change',
+                params: {
+                    checkout: {
+                        id: getUrlParams().checkoutId,
+                        status: 'incomplete',
+                        currency: 'USD',
+                        totals: [{ type: 'total', amount: 2999, display_text: 'Total' }]
+                    }
+                }
+            });
+        }
+
+        // Handle payment credential from Host
+        function handlePaymentCredential(message) {
+            if (message.params?.credential || message.result?.credential) {
+                paymentReceived = true;
+                document.getElementById('completeBtn').disabled = false;
+                updateStatus('ready', 'Payment Ready');
+
+                // Notify state change
+                sendToHost({
+                    method: 'ec.change',
+                    params: {
+                        checkout: {
+                            id: getUrlParams().checkoutId,
+                            status: 'ready_for_complete'
+                        }
+                    }
+                });
+            }
+        }
+
+        // Handle fulfillment address from Host
+        function handleFulfillmentAddress(message) {
+            console.log('Address received:', message.params?.address);
+        }
+
+        // Request payment credential from Host
+        function requestPaymentCredential() {
+            sendToHost({
+                method: 'ec.payment.credential_request',
+                id: Date.now().toString(),
+                params: {
+                    checkout_id: getUrlParams().checkoutId,
+                    total: {
+                        amount: checkoutTotal,
+                        currency: 'USD'
+                    },
+                    supported_methods: ['card', 'wallet']
+                }
+            });
+        }
+
+        // Complete checkout - now uses API
+        function completeCheckout() {
+            completeCheckoutViaAPI();
+        }
+
+        // Cancel checkout
+        function cancelCheckout() {
+            sendToHost({
+                method: 'ec.error',
+                params: {
+                    code: 'USER_CANCELLED',
+                    message: 'User cancelled the checkout'
+                }
+            });
+        }
+
+        // Update status badge
+        function updateStatus(type, text) {
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            badge.className = `status-badge ${type}`;
+            statusText.textContent = text;
+        }
+
+        // Format amount from cents to dollars
+        function formatAmount(cents) {
+            return '$' + (cents / 100).toFixed(2);
+        }
+
+        // Display line items
+        function displayLineItems(lineItems) {
+            const section = document.getElementById('lineItemsSection');
+            const list = document.getElementById('lineItemsList');
+            const count = document.getElementById('itemCount');
+
+            if (!lineItems || lineItems.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            count.textContent = lineItems.length + ' item' + (lineItems.length > 1 ? 's' : '');
+            list.innerHTML = '';
+
+            lineItems.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'info-row';
+                row.innerHTML = `
+                    <span class="info-label">${item.item.title} × ${item.quantity}</span>
+                    <span class="info-value">${formatAmount(item.item.price * item.quantity)}</span>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        // Fetch checkout data from API
+        async function fetchCheckoutData(checkoutId) {
+            try {
+                const response = await fetch(`/api/checkout/${checkoutId}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        updateStatus('waiting', 'Checkout Not Found');
+                        return null;
+                    }
+                    throw new Error('Failed to fetch checkout');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching checkout:', error);
+                updateStatus('waiting', 'Error Loading');
+                return null;
+            }
+        }
+
+        // Complete checkout via API
+        async function completeCheckoutViaAPI() {
+            const params = getUrlParams();
+            try {
+                updateStatus('waiting', 'Processing...');
+                const response = await fetch(`/api/checkout/${params.checkoutId}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert('Error: ' + (error.error || 'Failed to complete'));
+                    updateStatus('waiting', 'Error');
+                    return;
+                }
+
+                const result = await response.json();
+
+                // Send ec.complete to host
+                sendToHost({
+                    method: 'ec.complete',
+                    params: {
+                        checkout_id: params.checkoutId,
+                        order: result.order
+                    }
+                });
+
+                updateStatus('ready', 'Order Placed! ✓');
+                document.getElementById('completeBtn').textContent = '✅ Order Confirmed!';
+                document.getElementById('completeBtn').disabled = true;
+                document.getElementById('payBtn').style.display = 'none';
+
+            } catch (error) {
+                console.error('Complete error:', error);
+                updateStatus('waiting', 'Error');
+            }
+        }
+
+        // Initialize on page load
+        async function init() {
+            const params = getUrlParams();
+
+            // Update UI with params
+            document.getElementById('checkoutId').textContent = params.checkoutId || 'Unknown';
+            document.getElementById('ecVersion').textContent = params.ecVersion;
+            document.getElementById('delegations').textContent = params.ecDelegate.length > 0
+                ? params.ecDelegate.join(', ')
+                : 'None';
+
+            // Listen for messages from Host
+            window.addEventListener('message', handleHostMessage);
+
+            // Fetch real checkout data
+            const checkoutData = await fetchCheckoutData(params.checkoutId);
+
+            if (checkoutData) {
+                // Display real data
+                displayLineItems(checkoutData.line_items);
+
+                // Find total from totals array
+                const totalItem = checkoutData.totals?.find(t => t.type === 'total');
+                if (totalItem) {
+                    checkoutTotal = totalItem.amount;
+                    document.getElementById('totalAmount').textContent = formatAmount(totalItem.amount);
+                }
+
+                // Update status based on checkout status
+                if (checkoutData.status === 'ready_for_complete') {
+                    updateStatus('ready', 'Ready to Complete');
+                    document.getElementById('completeBtn').disabled = false;
+                    paymentReceived = true;
+                } else if (checkoutData.status === 'completed') {
+                    updateStatus('ready', 'Already Completed');
+                    document.getElementById('completeBtn').disabled = true;
+                } else {
+                    updateStatus('ready', 'Checkout Loaded');
+                }
+            } else {
+                document.getElementById('totalAmount').textContent = '$0.00';
+            }
+
+            // Send ec.ready to Host (handshake initiation)
+            setTimeout(() => {
+                sendToHost({
+                    method: 'ec.ready',
+                    params: {
+                        version: EC_VERSION,
+                        checkout_id: params.checkoutId,
+                        capabilities: ['payment', 'fulfillment'],
+                        delegations_supported: ['payment.credential', 'payment.instruments_change', 'fulfillment.address'],
+                        checkout: checkoutData
+                    }
+                });
+            }, 500);
+        }
+
+
+        // Start initialization
+        init();
+    </script>
 </body>
+
 </html>
