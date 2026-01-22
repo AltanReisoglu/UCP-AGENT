@@ -45,7 +45,7 @@ ucp-agent server
 ucp-agent chat
 ```
 
-## 📖 Usage
+##  Usage
 
 ### CLI Commands
 
