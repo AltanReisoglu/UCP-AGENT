@@ -13,7 +13,7 @@
           "endpoint": "http://localhost:10999/.well-known/mcp.json"
         },
         "embedded": {
-            "schema": "https://ucp.dev/services/shopping/embedded.openrpc.json"
+          "schema": "https://ucp.dev/services/shopping/embedded.openrpc.json"
         }
       }
     },
@@ -30,22 +30,50 @@
         "spec": "https://ucp.dev/specs/shopping/fulfillment",
         "schema": "https://ucp.dev/schemas/shopping/fulfillment.json",
         "extends": "dev.ucp.shopping.checkout"
+      },
+      {
+        "name": "dev.ucp.shopping.ap2_mandate",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/ap2-mandates",
+        "schema": "https://ucp.dev/schemas/shopping/ap2_mandate.json",
+        "extends": "dev.ucp.shopping.checkout",
+        "config": {
+          "vp_formats_supported": {
+            "dc+sd-jwt": {}
+          }
+        }
+      },
+      {
+        "name": "dev.ucp.shopping.buyer_consent",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/buyer-consent",
+        "schema": "https://ucp.dev/schemas/shopping/buyer_consent.json",
+        "extends": "dev.ucp.shopping.checkout"
+      },
+      {
+        "name": "dev.ucp.shopping.discount",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/discount",
+        "schema": "https://ucp.dev/schemas/shopping/discount.json",
+        "extends": "dev.ucp.shopping.checkout"
       }
     ]
   },
   "payment": {
-    "handlers": [{
-      "id": "example_payment_provider",
-      "name": "example.payment.provider",
-      "version": "2026-01-11",
-      "spec": "https://pay.provider.example/specs/handlers/payments",
-      "config_schema": "https://pay.provider.example/specs/handlers/config.json",
-      "instrument_schemas": [
-        "https://ucp.dev/schemas/shopping/types/card_payment_instrument.json"
-      ],
-      "config": {
-        "business_id": "1234567890"
+    "handlers": [
+      {
+        "id": "example_payment_provider",
+        "name": "example.payment.provider",
+        "version": "2026-01-11",
+        "spec": "https://pay.provider.example/specs/handlers/payments",
+        "config_schema": "https://pay.provider.example/specs/handlers/config.json",
+        "instrument_schemas": [
+          "https://ucp.dev/schemas/shopping/types/card_payment_instrument.json"
+        ],
+        "config": {
+          "business_id": "1234567890"
+        }
       }
-    }]
+    ]
   }
 }

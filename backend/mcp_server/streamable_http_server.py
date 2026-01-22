@@ -662,7 +662,16 @@ def ep_tool(
     
 ) -> Dict:
     """
-    Agent can call this tool to continue the checkout process.
+    Get embedded checkout URL for the given checkout session.
+    
+    This tool returns the continue_url for embedded checkout (EP Binding) along
+    with supported delegation capabilities. The agent or host can use this URL
+    to embed the checkout interface in an iframe/webview.
+    
+    EP Binding enables:
+    - Embedding the checkout UI in a host application
+    - Bidirectional communication via JSON-RPC 2.0 messages
+    - Delegation of payment and fulfillment interactions to the host
     
     Args:
         id: The unique identifier of the checkout session
@@ -670,9 +679,14 @@ def ep_tool(
         ucp_meta: Metadata containing UCP platform profile
         
     Returns:
-        dict: Checkout object with status: completed, or error response
+        dict: Object containing:
+            - continue_url: The embedded checkout URL
+            - supported_delegations: List of delegation identifiers
+            - version: EP Binding version
     """
-
+    ucp_profile = _extract_ucp_profile(ucp_meta)
+    logger.info(f"ep_binding called for id: {id}, profile: {ucp_profile}")
+    
     checkout = store.get_checkout(id)
     
     if checkout is None:
@@ -682,8 +696,42 @@ def ep_tool(
             severity="recoverable"
         )
     
+    # Get the continue_url (already set by store._recalculate_checkout)
+    continue_url = str(checkout.continue_url) if checkout.continue_url else None
     
+    if not continue_url:
+        return _create_error_response(
+            code="EMBEDDED_CHECKOUT_NOT_AVAILABLE",
+            message="Embedded checkout URL is not available for this checkout",
+            severity="recoverable"
+        )
     
+    # EP Binding constants
+    EP_VERSION = "2026-01-11"
+    SUPPORTED_DELEGATIONS = [
+        "payment.instruments_change",
+        "payment.credential", 
+        "fulfillment.address_change",
+    ]
+    
+    return {
+        "status": "success",
+        "embedded_checkout": {
+            "continue_url": continue_url,
+            "version": EP_VERSION,
+            "supported_delegations": SUPPORTED_DELEGATIONS,
+            "usage": {
+                "description": "Load this URL in an iframe/webview with EP query parameters",
+                "example_url": f"{continue_url}?ec_version={EP_VERSION}&ec_delegate=payment.credential,fulfillment.address_change",
+                "parameters": {
+                    "ec_version": f"Required. Set to {EP_VERSION}",
+                    "ec_delegate": "Optional. Comma-separated list of delegations the host wants to handle",
+                    "ec_auth": "Optional. Authentication token"
+                }
+            }
+        },
+        constants.UCP_CHECKOUT_KEY: checkout.model_dump(mode="json")
+    }
     
 
 # ============================================================================

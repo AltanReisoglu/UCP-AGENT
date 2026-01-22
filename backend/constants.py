@@ -19,3 +19,15 @@ class Constants:
     UCP_CHECKOUT_KEY = "a2a.ucp.checkout"
     UCP_PAYMENT_DATA_KEY = "a2a.ucp.checkout.payment_data"
     UCP_RISK_SIGNALS_KEY = "a2a.ucp.checkout.risk_signals"
+    
+    # EP Binding (Embedded Checkout Protocol) Constants
+    EP_VERSION = "2026-01-11"
+    EP_DELEGATE_PAYMENT_INSTRUMENTS = "payment.instruments_change"
+    EP_DELEGATE_PAYMENT_CREDENTIAL = "payment.credential"
+    EP_DELEGATE_FULFILLMENT_ADDRESS = "fulfillment.address_change"
+    
+    # AP2 Mandates Extension Constants
+    AP2_VERSION = "2026-01-11"
+    AP2_CAPABILITY_NAME = "dev.ucp.shopping.ap2_mandate"
+    AP2_SPEC_URL = "https://ucp.dev/specification/ap2-mandates"
+
