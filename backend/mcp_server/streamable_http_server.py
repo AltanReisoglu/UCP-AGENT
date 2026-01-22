@@ -654,6 +654,37 @@ def cancel_checkout(
             severity="recoverable"
         )
 
+@mcp.tool("ep_binding")
+def ep_tool(
+    id: str,
+    idempotency_key: Optional[str] = None,
+    ucp_meta: Optional[Dict[str, Any]] = None,
+    
+) -> Dict:
+    """
+    Agent can call this tool to continue the checkout process.
+    
+    Args:
+        id: The unique identifier of the checkout session
+        idempotency_key: UUID for retry safety
+        ucp_meta: Metadata containing UCP platform profile
+        
+    Returns:
+        dict: Checkout object with status: completed, or error response
+    """
+
+    checkout = store.get_checkout(id)
+    
+    if checkout is None:
+        return _create_error_response(
+            code="CHECKOUT_NOT_FOUND",
+            message=f"Checkout with ID {id} was not found",
+            severity="recoverable"
+        )
+    
+    
+    
+    
 
 # ============================================================================
 # Additional Helper Tools (Non-UCP Standard, but useful for agents)
