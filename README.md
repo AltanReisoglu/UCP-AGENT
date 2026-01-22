@@ -8,18 +8,18 @@
 
 UCP enables AI agents to securely make purchases on behalf of users through a standardized protocol that works with any merchant, any payment provider, and any AI platform.
 
-## ✨ Features
+##  Features
 
-- 🛒 **Shopping Agent** - AI-powered product search, cart management, and checkout
-- 🔌 **MCP Server** - Model Context Protocol tools for LLM integration
-- 🖼️ **Embedded Checkout** - Embeddable checkout UI with JSON-RPC 2.0 messaging
-- 🔐 **AP2 Mandates** - Cryptographic signatures (ES256) for secure transactions
-- 📜 **Buyer Consent** - GDPR/CCPA compliant consent management
-- 🏷️ **Discounts** - Promo codes and automatic discounts
-- 📦 **Fulfillment** - Shipping and pickup options
-- 🤖 **LLM Support** - Works with Ollama, OpenAI, Google Gemini
+- **Shopping Agent** - AI-powered product search, cart management, and checkout
+-  **MCP Server** - Model Context Protocol tools for LLM integration
+-  **Embedded Checkout** - Embeddable checkout UI with JSON-RPC 2.0 messaging
+-  **AP2 Mandates** - Cryptographic signatures (ES256) for secure transactions
+-  **Buyer Consent** - GDPR/CCPA compliant consent management
+-  **Discounts** - Promo codes and automatic discounts
+-  **Fulfillment** - Shipping and pickup options
+-  **LLM Support** - Works with Ollama, OpenAI, Google Gemini
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Installation
 
@@ -103,7 +103,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 # GOOGLE_API_KEY=your-api-key
 ```
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -141,7 +141,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 | **Discounts** | Promo codes and automatic discounts |
 | **EP Binding** | Embedded checkout protocol |
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 ucp-agent/
@@ -162,7 +162,7 @@ ucp-agent/
 └── pyproject.toml
 ```
 
-## 🔗 Related Links
+##  Related Links
 
 - [UCP Specification](https://ucp.dev/specification/)
 - [MCP Protocol](https://modelcontextprotocol.io/)
@@ -172,7 +172,7 @@ ucp-agent/
 
 Apache 2.0 - See [LICENSE](LICENSE) for details.
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please read our contributing guidelines before submitting PRs.
 
