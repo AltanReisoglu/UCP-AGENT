@@ -1,103 +1,181 @@
-# UCP Agent
+# UCP-AGENT
 
-Google ADK, UCP (Universal Commerce Protocol) ve MCP (Model Context Protocol) ile gelistirilmis alisveris ajansi.
+[![PyPI version](https://badge.fury.io/py/ucp-agent.svg)](https://badge.fury.io/py/ucp-agent)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
-## Ozellikler
+**Universal Commerce Protocol (UCP)** reference implementation for AI-powered shopping agents.
 
-- Urun arama ve sepet yonetimi
-- MCP sunucusu ile arac entegrasyonu
-- Ollama ve Google Gemini destegi
-- UCP uyumlu odeme akisi
+UCP enables AI agents to securely make purchases on behalf of users through a standardized protocol that works with any merchant, any payment provider, and any AI platform.
 
-## Hizli Baslangic
+## ✨ Features
 
-### 1. Bagimliliklari yukleyin
+- 🛒 **Shopping Agent** - AI-powered product search, cart management, and checkout
+- 🔌 **MCP Server** - Model Context Protocol tools for LLM integration
+- 🖼️ **Embedded Checkout** - Embeddable checkout UI with JSON-RPC 2.0 messaging
+- 🔐 **AP2 Mandates** - Cryptographic signatures (ES256) for secure transactions
+- 📜 **Buyer Consent** - GDPR/CCPA compliant consent management
+- 🏷️ **Discounts** - Promo codes and automatic discounts
+- 📦 **Fulfillment** - Shipping and pickup options
+- 🤖 **LLM Support** - Works with Ollama, OpenAI, Google Gemini
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
-pip install -e .
+pip install ucp-agent
 ```
 
-### 2. Ortam degiskenlerini ayarlayin
+### One-Command Launch
 
-`.env` dosyasi olusturun:
+```bash
+ucp-agent run
+```
+
+This starts the MCP server and opens an interactive chat with the shopping agent.
+
+### Or step by step:
+
+```bash
+# Start MCP server
+ucp-agent server
+
+# In another terminal, start chat
+ucp-agent chat
+```
+
+## 📖 Usage
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `ucp-agent run` | Start server + chat in one command |
+| `ucp-agent server` | Start MCP server only |
+| `ucp-agent chat` | Start interactive chat |
+| `ucp-agent test` | Run system tests |
+
+### Example Conversation
+
+```
+You: search for chips
+Agent: Found 2 products: Classic Potato Chips ($3.79), Baked Sweet Potato Chips ($4.79)
+
+You: buy 2 classic chips  
+Agent: Created checkout with 2x Classic Potato Chips. Total: $7.58
+
+You: complete the order
+Agent: Order completed! Order ID: ORD-12345
+```
+
+### MCP Tools
+
+The following tools are available for LLM integration:
+
+| Tool | Description |
+|------|-------------|
+| `search_products` | Search product catalog |
+| `get_product` | Get product details |
+| `create_checkout` | Create new checkout session |
+| `get_checkout` | Get checkout status |
+| `update_checkout` | Update buyer/shipping info |
+| `complete_checkout` | Complete the order |
+| `cancel_checkout` | Cancel checkout |
+| `ep_binding` | Get embedded checkout URL |
+
+## ⚙️ Configuration
+
+Create a `.env` file:
 
 ```env
-# Ollama icin (yerel LLM)
+# For Ollama (local LLM, free)
 USE_OLLAMA=true
 OLLAMA_MODEL=llama3.2:3b
 OLLAMA_BASE_URL=http://localhost:11434
 
-# Google Gemini icin
+# For OpenAI
 # USE_OLLAMA=false
-# GOOGLE_API_KEY=api_anahtariniz
+# OPENAI_API_KEY=your-api-key
+
+# For Google Gemini
+# USE_OLLAMA=false
+# GOOGLE_API_KEY=your-api-key
 ```
 
-### 3. MCP Sunucusunu baslatin
-
-```bash
-python -m app server
-```
-
-### 4. Sohbeti baslatin (yeni terminal)
-
-```bash
-python -m app chat
-```
-
-## CLI Komutlari
-
-| Komut | Aciklama |
-|-------|----------|
-| `python -m app server` | MCP sunucusunu baslatir |
-| `python -m app chat` | Interaktif sohbet |
-| `python -m app test` | Sistem testi |
-| `python -m app mcp` | MCP baglantisini test eder |
-
-## Proje Yapisi
+## 🏗️ Architecture
 
 ```
-UCP-AGENT/
-├── app/                    # CLI uygulamasi
-│   ├── cmd.py             # CLI komutlari
-│   └── __main__.py        # Giris noktasi
+┌─────────────────────────────────────────────────┐
+│              AI Platform (Host)                  │
+│         (Claude, ChatGPT, Custom Agent)          │
+└─────────────────────┬───────────────────────────┘
+                      │ MCP Protocol
+                      ▼
+┌─────────────────────────────────────────────────┐
+│               UCP-AGENT Server                   │
+│  ┌─────────────────────────────────────────┐    │
+│  │           Transport Bindings             │    │
+│  │  • MCP (Tools)  • A2A  • EP (Embedded)  │    │
+│  └─────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────┐    │
+│  │              Extensions                  │    │
+│  │  • Fulfillment  • AP2 Mandates          │    │
+│  │  • Buyer Consent  • Discounts           │    │
+│  └─────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────┐    │
+│  │            Retail Store                  │    │
+│  │  • Products  • Checkouts  • Orders      │    │
+│  └─────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────┘
+```
+
+## 🔌 UCP Protocol Extensions
+
+| Extension | Description |
+|-----------|-------------|
+| **Checkout** | Core checkout capability |
+| **Fulfillment** | Shipping/pickup options |
+| **AP2 Mandates** | Cryptographic transaction signing |
+| **Buyer Consent** | Privacy consent (GDPR/CCPA) |
+| **Discounts** | Promo codes and automatic discounts |
+| **EP Binding** | Embedded checkout protocol |
+
+## 📁 Project Structure
+
+```
+ucp-agent/
+├── app/                     # CLI application
+│   ├── cmd.py              # CLI commands
+│   └── __main__.py
 ├── backend/
-│   ├── host_agent/        # Ajan mantigi
-│   │   ├── agent.py       # Ajan tanimi
-│   │   └── agent_executor.py
-│   ├── mcp_server/        # MCP sunucusu
-│   │   ├── streamable_http_server.py
-│   │   ├── mcp_adapter.py
-│   │   └── mcp_config.json
-│   ├── store.py           # Magaza mantigi
-│   └── mock_datas/        # Ornek veriler
-├── sdk/                   # UCP SDK
-├── pyproject.toml         # Proje bagimliliklari
-└── .env                   # Yapilandirma
+│   ├── mcp_server/         # MCP server implementation
+│   ├── host_agent/         # Shopping agent logic
+│   ├── store.py            # Retail store simulation
+│   ├── embedded_checkout.py # EP Binding
+│   ├── ap2_mandates.py     # Cryptographic signing
+│   ├── buyer_consent.py    # Consent management
+│   ├── discount.py         # Discount handling
+│   └── mock_datas/         # Sample data
+├── sdk/                     # UCP SDK
+├── run.py                   # Single-command launcher
+└── pyproject.toml
 ```
 
-## MCP Araclari
+## 🔗 Related Links
 
-- `search_products` - Katalogda arama yapar
-- `get_product` - Urun detaylarini getirir
-- `create_checkout` - Yeni sepet olusturur
-- `get_checkout` - Sepet durumunu gosterir
-- `update_checkout` - Sepeti gunceller
-- `complete_checkout` - Siparisi tamamlar
-- `cancel_checkout` - Sepeti iptal eder
+- [UCP Specification](https://ucp.dev/specification/)
+- [MCP Protocol](https://modelcontextprotocol.io/)
+- [AP2 Protocol](https://ap2-protocol.org/)
 
-## Ornek Kullanim
+## 📄 License
 
-```
-Sen: chips ara
-Ajan: 2 urun bulundu: Classic Potato Chips ($3.79), Baked Sweet Potato Chips ($4.79)
+Apache 2.0 - See [LICENSE](LICENSE) for details.
 
-Sen: 2 adet classic chips al
-Ajan: 2x Classic Potato Chips ile sepet olusturuldu. Toplam: $7.58
+## 🤝 Contributing
 
-Sen: siparisi tamamla
-Ajan: Siparis tamamlandi! Siparis ID: ORD-12345
-```
+Contributions are welcome! Please read our contributing guidelines before submitting PRs.
 
-## Lisans
+---
 
-Apache 2.0
+**Built with ❤️ for the future of AI commerce**

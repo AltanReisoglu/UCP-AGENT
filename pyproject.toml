@@ -1,12 +1,92 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "ucp-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Universal Commerce Protocol (UCP) reference implementation for AI-powered shopping agents"
 readme = "README.md"
-requires-python = ">=3.12"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [
+    {name = "UCP Authors"}
+]
+keywords = [
+    "ucp",
+    "commerce",
+    "ai",
+    "agent",
+    "mcp",
+    "checkout",
+    "payments",
+    "shopping",
+    "llm"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "a2a-sdk[all]>=0.3.22",
     "fastmcp>=2.14.0",
     "google-adk>=1.22.1",
     "litellm>=1.80.16",
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.26.0",
+    "click>=8.1.0",
+    "python-dotenv>=1.0.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Universal-Commerce-Protocol/ucp-agent"
+Documentation = "https://ucp.dev/specification/"
+Repository = "https://github.com/Universal-Commerce-Protocol/ucp-agent"
+Issues = "https://github.com/Universal-Commerce-Protocol/ucp-agent/issues"
+
+[project.scripts]
+ucp-agent = "app.cmd:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "backend", "sdk/python/src/ucp_sdk"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/app",
+    "/backend",
+    "/sdk",
+    "/run.py",
+    "/README.md",
+    "/LICENSE",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
